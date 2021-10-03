@@ -20,10 +20,10 @@
 [CmdletBinding()]
 param(
     $ExpiresInDays = 110,
-    [string]$EmailAddress,
-    [string]$STResourceGroupName,
-    [string]$storageName,
-    [string]$KeyVaultName
+    [string]$emailaddress,
+    [string]$stresourcegroupname,
+    [string]$storagename,
+    [string]$keyvaultname
 )
 
 # Ensures that no login info is saved after the runbook is done
@@ -36,12 +36,12 @@ Login-AzAccount -ServicePrincipal -Tenant $connection.TenantID -ApplicationId $c
 $daysFromNow = (Get-Date).AddDays($ExpiresInDays)
 
 # Get all certificates form Azure Key Vault
-$sslCerts = Get-AzKeyVaultCertificate -VaultName $KeyVaultName
+$sslCerts = Get-AzKeyVaultCertificate -VaultName $keyvaultname
 
 Write-Output "Check for certificates that expire in $ExpiresInDays days"
 
 $sslCerts | ForEach-Object {
-    $cert = Get-AzKeyVaultCertificate -VaultName $KeyVaultName -Name $_.name
+    $cert = Get-AzKeyVaultCertificate -VaultName $keyvaultname -Name $_.name
     
     # Save ID of the current certificate versions, that will be used for disabling later
     $certificateOldVersion = $cert.Version
@@ -80,7 +80,7 @@ $sslCerts | ForEach-Object {
         New-ACMEAccountKey $state -PassThru;
 
         # Register the account key with the acme service. The account key will automatically be read from the state
-        New-ACMEAccount $state -EmailAddresses $EmailAddress -AcceptTOS;
+        New-ACMEAccount $state -EmailAddresses $emailaddress -AcceptTOS;
 
         # Load an state object to have service directory and account keys available
         $state = Get-ACMEState -Path $tempFolder;
@@ -108,7 +108,7 @@ $sslCerts | ForEach-Object {
         Set-Content -Path $fileName -Value $challenge.Data.Content -NoNewline;
 
         $blobName = ".well-known/acme-challenge/" + $challenge.Token
-        $storageAccount = Get-AzStorageAccount -ResourceGroupName $StorageResourceGroupName -Name $StorageName
+        $storageAccount = Get-AzStorageAccount -ResourceGroupName $stresourcegroupname -Name $storagename
         $ctx = $storageAccount.Context
         Set-AzStorageBlobContent -File $fileName -Container "public" -Context $ctx -Blob $blobName
 
@@ -142,10 +142,10 @@ $sslCerts | ForEach-Object {
         Remove-AzStorageBlob -Container "public" -Context $ctx -Blob $blobName
 
         ### Upload new Certificate version to KeyVault
-        Import-AzKeyVaultCertificate -VaultName $KeyVaultName -Name $AGOldCertName -FilePath "$tempFolder\$domain.pfx" -Password $password
+        Import-AzKeyVaultCertificate -VaultName $keyvaultname -Name $AGOldCertName -FilePath "$tempFolder\$domain.pfx" -Password $password
 
         # Disable older certificate version
-        Update-AzKeyVaultCertificate -VaultName $KeyVaultName -Name $AGOldCertName -Version $certificateOldVersion -Enable $false
+        Update-AzKeyVaultCertificate -VaultName $keyvaultname -Name $AGOldCertName -Version $certificateOldVersion -Enable $false
         Write-Output "Older version ID: '$certificateOldVersion' for certificate $AGOldCertName is disabled"
 
         Write-Output "Completed renewing of the certificate: $AGOldCertName for $domain. New certificate version is uploaded."
