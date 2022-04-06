@@ -155,14 +155,13 @@ workflow acme-runbook-dev {
         		}
 		
         		# As soon as the url shows up we can create the PFX
-        		$password = ConvertTo-SecureString -String "Passw@rd123***" -Force -AsPlainText
-        		Export-ACMECertificate $state -Order $order -CertificateKey $certKey -Path "$tempFolder\$domain.pfx" -Password $password;
+        		Export-ACMECertificate $state -Order $order -CertificateKey $certKey -Path "$tempFolder\$domain.pfx";
 		
         		# Delete blob to check DNS
         		Remove-AzStorageBlob -Container "public" -Context $ctx -Blob $blobName
 		
         		### Upload new Certificate version to KeyVault
-        		Import-AzKeyVaultCertificate -VaultName $keyvaultname -Name $AGOldCertName -FilePath "$tempFolder\$domain.pfx" -Password $password
+        		Import-AzKeyVaultCertificate -VaultName $keyvaultname -Name $AGOldCertName -FilePath "$tempFolder\$domain.pfx"
 		
         		# Disable older certificate version
         		Update-AzKeyVaultCertificate -VaultName $keyvaultname -Name $AGOldCertName -Version $certificateOldVersion -Enable $false
