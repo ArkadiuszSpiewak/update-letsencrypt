@@ -50,6 +50,11 @@ workflow acme-runbook-dev {
 		# set and store context
 		$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext
 		
+		$daysFromNow = (Get-Date).AddDays($ExpiresInDays)
+		
+		# Get all certificates form Azure Key Vault
+		$sslCerts = Get-AzKeyVaultCertificate -VaultName $keyvaultname
+
 		Write-Output "Check for certificates that expire in $ExpiresInDays days"
 		
 		$sslCerts | ForEach-Object {
