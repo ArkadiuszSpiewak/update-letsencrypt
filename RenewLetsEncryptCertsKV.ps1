@@ -20,7 +20,7 @@
 workflow acme-runbook-dev {
 	[CmdletBinding()]
 	param(
-    	$ExpiresInDays = 14,
+    	[int]$expiresindays = 14,
     	[string]$emailaddress,
     	[string]$stresourcegroupname,
     	[string]$storagename,
@@ -29,7 +29,7 @@ workflow acme-runbook-dev {
 	)
 
 	inlineScript {
-		$ExpiresInDays = $using:ExpiresInDays
+		$expiresindays = $using:expiresindays
 		$emailaddress = $using:emailaddress
 		$stresourcegroupname = $using:stresourcegroupname
 		$storagename = $using:storagename
@@ -53,12 +53,12 @@ workflow acme-runbook-dev {
     		-DefaultProfile $AzureContext
 
 		
-		$daysFromNow = (Get-Date).AddDays($ExpiresInDays)
+		$daysFromNow = (Get-Date).AddDays($expiresindays)
 		
 		# Get all certificates form Azure Key Vault
 		$sslCerts = Get-AzKeyVaultCertificate -VaultName $keyvaultname
 		
-		Write-Output "Check for certificates that expire in $ExpiresInDays days"
+		Write-Output "Check for certificates that expire in $expiresindays days"
 		
 		$sslCerts | ForEach-Object {
     		$cert = Get-AzKeyVaultCertificate -VaultName $keyvaultname -Name $_.name
