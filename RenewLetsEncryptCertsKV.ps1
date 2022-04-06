@@ -20,7 +20,7 @@
 workflow acme-runbook-dev {
 	[CmdletBinding()]
 	param(
-    	$ExpiresInDays = 110,
+    	$ExpiresInDays = 14,
     	[string]$emailaddress,
     	[string]$stresourcegroupname,
     	[string]$storagename,
