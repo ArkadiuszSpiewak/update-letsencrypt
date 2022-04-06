@@ -3,7 +3,6 @@
 # Pre-requirements:
 #      - Have a storage account in which the folder path has been created: 
 #        '/.well-known/acme-challenge/', to put here the Let's Encrypt DNS check files
-
 #      - Add "Path-based" rule in the Application Gateway with this configuration: 
 #           - Path: '/.well-known/acme-challenge/*'
 #           - Check the configure redirection option
@@ -26,17 +25,20 @@ param(
     [string]$keyvaultname
 )
 
-# Ensures that no login info is saved after the runbook is done
-Disable-AzContextAutosave
+# Ensures you do not inherit an AzContext in your runbook
+Disable-AzContextAutosave -Scope Process | Out-Null
 
-# Log in as the service principal from the Runbook
-$connection = Get-AutomationConnection -Name AzureRunAsConnection
-Login-AzAccount -ServicePrincipal -Tenant $connection.TenantID -ApplicationId $connection.ApplicationID -CertificateThumbprint $connection.CertificateThumbprint
+# Connect using a Managed Service Identity
+try {
+   		$AzureContext = (Connect-AzAccount -Identity).context
+    }
+catch{
+        Write-Output "There is no system-assigned user identity. Aborting."; 
+        exit
+    }
 
-$daysFromNow = (Get-Date).AddDays($ExpiresInDays)
-
-# Get all certificates form Azure Key Vault
-$sslCerts = Get-AzKeyVaultCertificate -VaultName $keyvaultname
+# set and store context
+$AzureContext = Set-AzContext -SubscriptionName $AzureContext.Subscription -DefaultProfile $AzureContext
 
 Write-Output "Check for certificates that expire in $ExpiresInDays days"
 
