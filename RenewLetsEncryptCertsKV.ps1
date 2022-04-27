@@ -17,7 +17,7 @@
 #
 #######################################################################################
 
-workflow acme-runbook-dev {
+workflow acme-runbook {
 	[CmdletBinding()]
 	param(
     	[int]$expiresindays = 14,
