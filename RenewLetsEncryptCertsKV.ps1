@@ -24,7 +24,8 @@ workflow acme-runbook {
     	[string]$emailaddress,
     	[string]$stresourcegroupname,
     	[string]$storagename,
-    	[string]$keyvaultname
+    	[string]$keyvaultname,
+		[string]$containername = "public"
 	
 	)
 
@@ -34,6 +35,7 @@ workflow acme-runbook {
 		$stresourcegroupname = $using:stresourcegroupname
 		$storagename = $using:storagename
 		$keyvaultname = $using:keyvaultname
+		$containername = $using:containername
 		
 		
 		# Ensures you do not inherit an AzContext in your runbook
@@ -130,7 +132,7 @@ workflow acme-runbook {
         		$blobName = ".well-known/acme-challenge/" + $challenge.Token
         		$storageAccount = Get-AzStorageAccount -ResourceGroupName $stresourcegroupname -Name $storagename
         		$ctx = $storageAccount.Context
-        		Set-AzStorageBlobContent -File $fileName -Container "public" -Context $ctx -Blob $blobName
+        		Set-AzStorageBlobContent -File $fileName -Container $containername -Context $ctx -Blob $blobName
 		
         		# Signal the ACME server that the challenge is ready
         		$challenge | Complete-ACMEChallenge $state;
